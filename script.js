@@ -1,112 +1,61 @@
-const socket = io();
+const socket = io()
 
-let room;
-let name;
-let symbol;
+const cells = document.querySelectorAll(".cell")
 
-let board = ["","","","","","","","",""];
-let turn = "X";
+let board = ["","","","","","","","",""]
+let turn = "X"
 
-const boardDiv = document.getElementById("board");
+cells.forEach((cell,index)=>{
 
-for(let i=0;i<9;i++){
+cell.onclick=()=>{
 
-let cell = document.createElement("div");
-cell.classList.add("cell");
-cell.dataset.index=i;
+if(board[index]!="") return
 
-cell.onclick = () => play(i);
+board[index]=turn
+cell.innerHTML=turn
 
-boardDiv.appendChild(cell);
+socket.emit("move",{index,turn})
 
-}
+checkWin()
 
-function join(){
-
-name = document.getElementById("name").value;
-room = document.getElementById("room").value;
-symbol = document.getElementById("symbol").value;
-
-socket.emit("joinRoom",{room,name,symbol});
-
-document.getElementById("menu").style.display="none";
+turn = turn=="X" ? "O":"X"
 
 }
 
-function play(i){
-
-if(board[i] !== "") return;
-if(turn !== symbol) return;
-
-clickSound();
-
-board[i]=symbol;
-
-update();
-
-socket.emit("move",{room,index:i,symbol});
-
-checkWin();
-
-turn = turn==="X" ? "O":"X";
-
-}
+})
 
 socket.on("move",data=>{
 
-board[data.index]=data.symbol;
+board[data.index]=data.turn
+cells[data.index].innerHTML=data.turn
 
-update();
-
-checkWin();
-
-turn = turn==="X" ? "O":"X";
-
-});
-
-function update(){
-
-document.querySelectorAll(".cell").forEach((c,i)=>{
-
-c.textContent = board[i];
-
-});
-
-}
+})
 
 function checkWin(){
 
-const wins = [
+const wins=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+]
 
-[0,1,2],
-[3,4,5],
-[6,7,8],
-[0,3,6],
-[1,4,7],
-[2,5,8],
-[0,4,8],
-[2,4,6]
+wins.forEach(w=>{
 
-];
+if(board[w[0]] &&
+board[w[0]]==board[w[1]] &&
+board[w[1]]==board[w[2]]){
 
-for(let w of wins){
-
-let a=w[0],b=w[1],c=w[2];
-
-if(board[a] && board[a]==board[b] && board[a]==board[c]){
-
-winSound();
-
-let winner = board[a]==symbol ? name : "Opponent";
-
-let loser = board[a]==symbol ? "Opponent" : name;
-
-speak(winner + " wins the game. " + loser + " loses.");
-
-socket.emit("gameOver",{room,winner});
+speak(board[w[0]]+" wins")
 
 }
 
+})
+
 }
+
+function speak(text){
+
+let msg = new SpeechSynthesisUtterance(text)
+speechSynthesis.speak(msg)
 
 }

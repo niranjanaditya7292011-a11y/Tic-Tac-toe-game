@@ -1,39 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Tic Tac Toe Online</title>
+<title>Tic Tac Toe Pro</title>
 <link rel="stylesheet" href="style .css">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
 </head>
 
 <body>
 
 <h1>Tic Tac Toe Online</h1>
 
-<div id="menu">
+<div id="login">
+<button onclick="login()">Login With Google</button>
+</div>
 
-<input id="name" placeholder="Your Name">
+<div id="friends">
 
-<input id="room" placeholder="Room Code">
+<h2>Friends</h2>
+<input id="friendEmail" placeholder="Friend Email">
+<button onclick="sendRequest()">Send Request</button>
 
-<select id="symbol">
-<option value="X">X</option>
-<option value="O">O</option>
-</select>
-
-<button onclick="join()">Join Game</button>
+<ul id="friendList"></ul>
 
 </div>
 
 <div id="game">
 
-<h2 id="turn"></h2>
-
-<div class="board" id="board"></div>
+<div id="board">
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+<div class="cell"></div>
+</div>
 
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src=" sound.js"></script>
 <script src="script.js"></script>
 
 </body>
