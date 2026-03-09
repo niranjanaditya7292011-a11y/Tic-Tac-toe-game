@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tic Tac Toe Online</title>
+<link rel="stylesheet" href="style .css">
+</head>
+
+<body>
+
+<h1>Tic Tac Toe Online</h1>
+
+<div id="menu">
+
+<input id="name" placeholder="Your Name">
+
+<input id="room" placeholder="Room Code">
+
+<select id="symbol">
+<option value="X">X</option>
+<option value="O">O</option>
+</select>
+
+<button onclick="join()">Join Game</button>
+
+</div>
+
+<div id="game">
+
+<h2 id="turn"></h2>
+
+<div class="board" id="board"></div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src=" sound.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
