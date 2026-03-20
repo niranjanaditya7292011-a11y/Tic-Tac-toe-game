@@ -5,15 +5,15 @@ const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server);
 
-// Serve frontend files
-app.use(express.static(path.join(__dirname)));
+// ✅ Serve static files (VERY IMPORTANT)
+app.use(express.static(__dirname));
 
-// When someone opens site
+// ✅ Default route (FIX FOR "Not Found")
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Socket connection
+// Socket
 io.on("connection", (socket) => {
   console.log("User Connected");
 
@@ -22,7 +22,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// IMPORTANT for Render
+// ✅ Render PORT fix
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
