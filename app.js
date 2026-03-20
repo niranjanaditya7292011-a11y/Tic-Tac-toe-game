@@ -1,3 +1,5 @@
+const socket = io();
+
 let board = ["", "", "", "", "", "", "", "", ""];
 let currentPlayer = "X";
 let gameActive = true;
@@ -18,22 +20,23 @@ function createBoard() {
 function makeMove(i) {
   if (board[i] === "" && gameActive) {
     board[i] = currentPlayer;
+
+    // 🔥 Send move to server
+    socket.emit("move", { index: i, player: currentPlayer });
+
     currentPlayer = currentPlayer === "X" ? "O" : "X";
     checkWinner();
     createBoard();
   }
 }
 
-function playAI() {
-  resetGame();
-  document.getElementById("status").innerText = "Playing vs Computer";
-}
-
-function aiMove() {
-  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
-  let random = empty[Math.floor(Math.random() * empty.length)];
-  board[random] = "O";
-}
+// 🔥 Receive move from other player
+socket.on("move", (data) => {
+  board[data.index] = data.player;
+  currentPlayer = data.player === "X" ? "O" : "X";
+  checkWinner();
+  createBoard();
+});
 
 function checkWinner() {
   const wins = [
@@ -48,12 +51,6 @@ function checkWinner() {
       gameActive = false;
     }
   });
-}
-
-function resetGame() {
-  board = ["","","","","","","","",""];
-  gameActive = true;
-  createBoard();
 }
 
 createBoard();
