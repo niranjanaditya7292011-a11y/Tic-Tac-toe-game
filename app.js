@@ -1,32 +1,59 @@
- const socket = io();
+let board = ["", "", "", "", "", "", "", "", ""];
+let currentPlayer = "X";
+let gameActive = true;
 
-let playerName;
+const boardDiv = document.getElementById("board");
 
-function login(){
-
-playerName = document.getElementById("name").value;
-
-document.getElementById("login").style.display="none";
-
-socket.emit("join",{name:playerName});
-
+function createBoard() {
+  boardDiv.innerHTML = "";
+  board.forEach((cell, i) => {
+    const div = document.createElement("div");
+    div.classList.add("cell");
+    div.innerText = cell;
+    div.onclick = () => makeMove(i);
+    boardDiv.appendChild(div);
+  });
 }
 
-function sendChat(){
-
-let msg = document.getElementById("msg").value;
-
-socket.emit("chat",{
-name:playerName,
-text:msg
-});
-
+function makeMove(i) {
+  if (board[i] === "" && gameActive) {
+    board[i] = currentPlayer;
+    currentPlayer = currentPlayer === "X" ? "O" : "X";
+    checkWinner();
+    createBoard();
+  }
 }
 
-socket.on("chat",data=>{
+function playAI() {
+  resetGame();
+  document.getElementById("status").innerText = "Playing vs Computer";
+}
 
-let chat=document.getElementById("chatBox");
+function aiMove() {
+  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+  let random = empty[Math.floor(Math.random() * empty.length)];
+  board[random] = "O";
+}
 
-chat.innerHTML+=`<p><b>${data.name}</b>: ${data.text}</p>`;
+function checkWinner() {
+  const wins = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
 
-});
+  wins.forEach(w => {
+    if (board[w[0]] && board[w[0]] === board[w[1]] && board[w[1]] === board[w[2]]) {
+      document.getElementById("winner").innerText = "Winner: " + board[w[0]];
+      gameActive = false;
+    }
+  });
+}
+
+function resetGame() {
+  board = ["","","","","","","","",""];
+  gameActive = true;
+  createBoard();
+}
+
+createBoard();

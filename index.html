@@ -1,40 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>Mini Free Fire</title>
-
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
-
+  <title>Tic Tac Pro</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Mini Free Fire</h1>
+<h1>🎮 Tic Tac Pro</h1>
 
-<div id="login">
 
-<input id="name" placeholder="Player Name">
 
-<button onclick="login()">Enter Game</button>
+<p id="playerInfo"></p>
 
-</div>
+<div class="board" id="board"></div>
 
-<div id="game">
+<h2 id="winner"></h2>
 
-<canvas id="gameCanvas" width="800" height="500"></canvas>
+<button onclick="playAI()">Restart </button>
 
-<div id="chatBox"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
 
-<input id="msg">
-<button onclick="sendChat()">Send</button>
-
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
+<script src="firebase.js"></script>
 <script src="app.js"></script>
-<script src="game.js"></script>
 
 </body>
 </html>
