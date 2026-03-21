@@ -36,9 +36,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("move", ({ roomId, index, player }) => {
-    socket.to(roomId).emit("move", { index, player });
-  });
+socket.on("move", ({ roomId, index, player }) => {
+  io.to(roomId).emit("move", { index, player });
+});
 
 });
 

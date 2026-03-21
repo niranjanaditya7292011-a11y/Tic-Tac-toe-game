@@ -1,39 +1,13 @@
-const socket = io();
+socket.on("move", (data) => {
+  board[data.index] = data.player;
 
-let board = ["", "", "", "", "", "", "", "", ""];
-let currentPlayer = "";
-let mySymbol = "";
-let roomId = "";
-let gameActive = false;
+  currentPlayer = data.player === "X" ? "O" : "X";
 
-const boardDiv = document.getElementById("board");
-
-function createBoard() {
-  boardDiv.innerHTML = "";
-  board.forEach((cell, i) => {
-    const div = document.createElement("div");
-    div.classList.add("cell");
-    div.innerText = cell;
-    div.onclick = () => makeMove(i);
-    boardDiv.appendChild(div);
-  });
-}
-
-function createRoom() {
-  socket.emit("createRoom");
-}
-
-function joinRoom() {
-  const input = document.getElementById("roomInput").value;
-  socket.emit("joinRoom", input);
-}
-
-socket.on("roomCreated", (id) => {
-  roomId = id;
-  mySymbol = "X";
-  document.getElementById("roomId").innerText = id;
-  document.getElementById("turn").innerText = "Waiting for player...";
+  updateTurn();
+  checkWinner();
+  createBoard();
 });
+
 
 socket.on("startGame", () => {
   gameActive = true;
@@ -45,20 +19,15 @@ socket.on("startGame", () => {
   document.getElementById("turn").innerText = "Game Started! Turn: X";
 });
 
-function makeMove(i) {
+ function makeMove(i) {
   if (!gameActive) return;
   if (board[i] !== "") return;
   if (currentPlayer !== mySymbol) return;
 
-  board[i] = mySymbol;
+  // ❌ REMOVE local update here
+  // board[i] = mySymbol;
 
   socket.emit("move", { roomId, index: i, player: mySymbol });
-
-  currentPlayer = mySymbol === "X" ? "O" : "X";
-
-  updateTurn();
-  checkWinner();
-  createBoard();
 }
 
 socket.on("move", (data) => {
