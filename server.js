@@ -5,26 +5,45 @@ const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server);
 
-// ✅ Serve static files (VERY IMPORTANT)
 app.use(express.static(__dirname));
 
-// ✅ Default route (FIX FOR "Not Found")
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Socket
-io.on("connection", (socket) => {
-  console.log("User Connected");
+let rooms = {};
 
-  socket.on("move", (data) => {
-    socket.broadcast.emit("move", data);
+io.on("connection", (socket) => {
+
+  socket.on("createRoom", () => {
+    const roomId = Math.random().toString(36).substr(2, 5);
+    rooms[roomId] = [socket.id];
+
+    socket.join(roomId);
+    socket.emit("roomCreated", roomId);
   });
+
+  socket.on("joinRoom", (roomId) => {
+    if (rooms[roomId] && rooms[roomId].length < 2) {
+      rooms[roomId].push(socket.id);
+      socket.join(roomId);
+
+      io.to(roomId).emit("startGame", {
+        players: rooms[roomId]
+      });
+    } else {
+      socket.emit("errorMsg", "Room full or not exist");
+    }
+  });
+
+  socket.on("move", ({ roomId, index, player }) => {
+    socket.to(roomId).emit("move", { index, player });
+  });
+
 });
 
-// ✅ Render PORT fix
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("Server running");
 });

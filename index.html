@@ -7,7 +7,15 @@
 <body>
 
 <h1>🎮 Tic Tac Pro</h1>
+<h2>Multiplayer</h2>
 
+<button onclick="createRoom()">Create Room</button>
+
+<input type="text" id="roomInput" placeholder="Enter Room ID">
+<button onclick="joinRoom()">Join Room</button>
+
+<p>Room ID: <span id="roomId"></span></p>
+<p id="turn"></p>
 
 
 <p id="playerInfo"></p>

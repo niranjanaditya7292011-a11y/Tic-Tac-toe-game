@@ -1,8 +1,10 @@
 const socket = io();
 
 let board = ["", "", "", "", "", "", "", "", ""];
-let currentPlayer = "X";
-let gameActive = true;
+let currentPlayer = "";
+let mySymbol = "";
+let roomId = "";
+let gameActive = false;
 
 const boardDiv = document.getElementById("board");
 
@@ -17,26 +19,61 @@ function createBoard() {
   });
 }
 
-function makeMove(i) {
-  if (board[i] === "" && gameActive) {
-    board[i] = currentPlayer;
-
-    // 🔥 Send move to server
-    socket.emit("move", { index: i, player: currentPlayer });
-
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    checkWinner();
-    createBoard();
-  }
+function createRoom() {
+  socket.emit("createRoom");
 }
 
-// 🔥 Receive move from other player
+function joinRoom() {
+  const input = document.getElementById("roomInput").value;
+  socket.emit("joinRoom", input);
+}
+
+socket.on("roomCreated", (id) => {
+  roomId = id;
+  mySymbol = "X";
+  document.getElementById("roomId").innerText = id;
+  document.getElementById("turn").innerText = "Waiting for player...";
+});
+
+socket.on("startGame", () => {
+  gameActive = true;
+
+  if (!mySymbol) mySymbol = "O";
+
+  currentPlayer = "X";
+
+  document.getElementById("turn").innerText = "Game Started! Turn: X";
+});
+
+function makeMove(i) {
+  if (!gameActive) return;
+  if (board[i] !== "") return;
+  if (currentPlayer !== mySymbol) return;
+
+  board[i] = mySymbol;
+
+  socket.emit("move", { roomId, index: i, player: mySymbol });
+
+  currentPlayer = mySymbol === "X" ? "O" : "X";
+
+  updateTurn();
+  checkWinner();
+  createBoard();
+}
+
 socket.on("move", (data) => {
   board[data.index] = data.player;
+
   currentPlayer = data.player === "X" ? "O" : "X";
+
+  updateTurn();
   checkWinner();
   createBoard();
 });
+
+function updateTurn() {
+  document.getElementById("turn").innerText = "Turn: " + currentPlayer;
+}
 
 function checkWinner() {
   const wins = [
@@ -46,8 +83,13 @@ function checkWinner() {
   ];
 
   wins.forEach(w => {
-    if (board[w[0]] && board[w[0]] === board[w[1]] && board[w[1]] === board[w[2]]) {
-      document.getElementById("winner").innerText = "Winner: " + board[w[0]];
+    if (board[w[0]] &&
+        board[w[0]] === board[w[1]] &&
+        board[w[1]] === board[w[2]]) {
+
+      document.getElementById("winner").innerText =
+        "Winner: " + board[w[0]];
+
       gameActive = false;
     }
   });
