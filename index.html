@@ -1,37 +1,279 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tic Tac Pro</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Tic Tac Toe Ultimate</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial;
+      background: #111;
+      color: white;
+    }
+
+    h1 { margin-top: 20px; }
+
+    button {
+      margin: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 30px;
+      background: #222;
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<h1>🎮 Tic Tac Pro</h1>
-<h2>Multiplayer</h2>
+<h1>🔥 Tic Tac Toe Ultimate</h1>
 
-<button onclick="createRoom()">Create Room</button>
+<!-- MODES -->
+<button onclick="startLocal()">2 Player</button>
+<button onclick="startAI()">VS Computer</button>
+<button onclick="showOnline()">Online</button>
 
-<input type="text" id="roomInput" placeholder="Enter Room ID">
-<button onclick="joinRoom()">Join Room</button>
+<div id="onlineBox" style="display:none;">
+  <input id="roomInput" placeholder="Room ID">
+  <button onclick="createRoom()">Create</button>
+  <button onclick="joinRoom()">Join</button>
+</div>
 
-<p>Room ID: <span id="roomId"></span></p>
-<p id="turn"></p>
+<div id="board" class="board"></div>
+<div id="status"></div>
+<button onclick="restart()">Restart</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+/* 🔥 PASTE YOUR FIREBASE CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  databaseURL: "https://a-simple-game-for-me-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET",
+  messagingSenderId: "YOUR_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* GAME */
+let board = ["","","","","","","","",""];
+let cells = [];
+let mode = "";
+let currentPlayer = "X";
+let gameActive = true;
+
+/* ONLINE */
+let roomId = "";
+let player = "";
+
+/* UI */
+const boardDiv = document.getElementById("board");
+const statusText = document.getElementById("status");
+
+/* CREATE BOARD */
+function createBoard() {
+  boardDiv.innerHTML = "";
+  cells = [];
+
+  for (let i=0;i<9;i++){
+    let c = document.createElement("div");
+    c.className = "cell";
+    c.onclick = () => clickCell(i);
+    boardDiv.appendChild(c);
+    cells.push(c);
+  }
+}
+
+/* MODES */
+window.startLocal = () => {
+  mode="local";
+  restart();
+  statusText.innerText="Player X Turn";
+};
+
+window.startAI = () => {
+  mode="ai";
+  restart();
+  statusText.innerText="Your Turn";
+};
+
+window.showOnline = () => {
+  document.getElementById("onlineBox").style.display="block";
+};
+
+/* CLICK */
+function clickCell(i){
+  if(!gameActive || board[i]!="") return;
+
+  if(mode==="local"){
+    move(i,currentPlayer);
+    currentPlayer=currentPlayer==="X"?"O":"X";
+    statusText.innerText="Player "+currentPlayer+" Turn";
+  }
+
+  else if(mode==="ai"){
+    move(i,"X");
+    setTimeout(aiMove,400);
+  }
+
+  else if(mode==="online"){
+    onlineMove(i);
+  }
+}
+
+/* MOVE */
+function move(i,p){
+  if(board[i]!="") return;
+  board[i]=p;
+  cells[i].innerText=p;
+
+  if(checkWin(p)){
+    statusText.innerText=p+" Wins!";
+    gameActive=false;
+  }
+}
+
+/* AI */
+function aiMove(){
+  let i=board.findIndex(x=>x=="");
+  if(i!=-1) move(i,"O");
+}
+
+/* WIN */
+function checkWin(p){
+  const w=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  return w.some(a=>a.every(i=>board[i]==p));
+}
+
+/* RESTART */
+window.restart = () => {
+  board=["","","","","","","","",""];
+  gameActive=true;
+  createBoard();
+};
+
+/* ONLINE CREATE */
+window.createRoom = async () => {
+  roomId=Math.random().toString(36).substr(2,6);
+  player="X";
+  mode="online";
+
+await set(ref(db,"rooms/"+roomId),{
+  board: board,
+  turn:"X",
+  winner: "",
+  gameOver: false
+});
+  alert("Room ID: "+roomId);
+  listen();
+};
+
+/* ONLINE JOIN */
+window.joinRoom = async () => {
+  roomId=document.getElementById("roomInput").value.trim();
+  if(!roomId) return alert("Enter Room ID");
+
+  player="O";
+  mode="online";
+
+  const snap = await get(ref(db,"rooms/"+roomId));
+  if(!snap.exists()){
+    alert("Room not found");
+    return;
+  }
+
+  alert("Joined!");
+  listen();
+};
+
+/* LISTEN */
+function listen(){
+  onValue(ref(db,"rooms/"+roomId),(snap)=>{
+    let d=snap.val();
+    if(!d) return;
+
+    board=d.board;
+    board.forEach((v,i)=>cells[i].innerText=v);
+
+    // 🏆 CHECK GAME OVER
+    if(d.gameOver){
+      if(d.winner){
+        statusText.innerText = d.winner + " Wins!";
+      } else {
+        statusText.innerText = "Draw!";
+      }
+      gameActive = false;
+      return;
+    }
+
+    statusText.innerText = d.turn===player ? "Your Turn" : "Opponent Turn";
+  });
+}
+/* ONLINE MOVE */
+function onlineMove(i){
+  const r = ref(db,"rooms/"+roomId);
+
+  get(r).then(snap=>{
+    let d = snap.val();
+    if(!d) return;
+
+    if(d.turn !== player) return;
+    if(d.board[i] !== "") return;
+    if(d.gameOver) return;
+
+    // 🧠 COPY board correctly
+    let newBoard = [...d.board];
+    newBoard[i] = player;
+
+    // 🏆 CHECK WIN USING UPDATED BOARD
+    let winPatterns = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    let winner = winPatterns.some(pattern =>
+      pattern.every(index => newBoard[index] === player)
+    );
+
+    let isDraw = newBoard.every(cell => cell !== "");
+
+    update(r,{
+      board: newBoard,
+      turn: player === "X" ? "O" : "X",
+      winner: winner ? player : "",
+      gameOver: winner || isDraw
+    });
+  });
+}
+
+/* INIT */
+createBoard();
 
 
-<p id="playerInfo"></p>
 
-<div class="board" id="board"></div>
-
-<h2 id="winner"></h2>
-
-<button onclick="playAI()">Restart </button>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-
-<script src="firebase.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script src="app.js"></script>
+</script>
 
 </body>
 </html>
